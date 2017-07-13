@@ -1,3 +1,4 @@
+#ICS 3UI FINAL PROJECT
 #TANKS
 #BY: SOURAV B.
 
@@ -678,13 +679,13 @@ def CreateWalls(): #MAP CREATED HERE
 
     #OBSTACLES IN THE MIDDLE OF THE MAP
     
-    DrawWall("v",300,340,410)
-    DrawWall("v",300,540,610)
-    DrawWall("v",900,490,560)
-    DrawWall("v",900,690,760)
+    DrawWall("v",300,300,400)
+    DrawWall("v",300,500,600)
+    DrawWall("v",900,500,600)
+    DrawWall("v",900,700,800)
 
-    DrawWall("h",500,440,510)
-    DrawWall("h",600,690,760)
+    DrawWall("h",500,450,550)
+    DrawWall("h",600,650,750)
 
     
 def CheckIfHitWall(PlayerNumber): #CHECK IF A PLAYER HAS HIT A WALL, RETURNS TRUE OR FALSE
@@ -1164,9 +1165,98 @@ def updateTankPosition(): #UPDATES PLAYER 1'S POSITION
     TreadL = s.create_polygon(xL1,yL1,xL2,yL2,xL3,yL3,xL4,yL4,fill = "black",width = 2)
 
 
+
+#A* PATHFINDING ALGORITHM
+def Astar(graph,start,finish):
+
+    #ASSIGNING HEURISTIC DISTANCES
+    for key in graph:
+
+        pos = key.split(" ")
+        x = int(pos[0])
+        y = int(pos[1])
+        x2 = int(finish[0])
+        y2 = int(finish[1])
+        
+        dist = ((x - x2)**2 + (y - y2)**2)**0.5
+        graph[key].append(dist)
+
+    #DIJKSTRA'S ALGORITHM WITH A* HEURISTIC
+    done = []
+    curr = str(start[0]) + " " + str(start[1])
+    b = []
+    
+    for c in range(0,int(1200/accuracy)):
+        
+        b.append([])
+        
+        for r in range(0,int(700/accuracy)):
+
+            #OF FORM (FROM, TOTAL DIST FROM START)
+            b[c].append(["",float("infinity")])
+                
+    queueOfPos = []
+    b[start[0]][start[1]] = [curr,0]
+    queueOfPos.append(curr)
+    
+    while curr != str(finish[0]) + " " + str(finish[1]):
+        
+        for i in range(0,len(graph[curr]) - 1):
+
+            path = graph[curr][i]
+            
+            if path not in done:
+                
+                currPos = curr.split(" ")
+                coordinates = path.split(" ")
+                heuristic = graph[key][len(graph[key]) - 1]
+                d = b[int(currPos[0])][int(currPos[1])][1] + 1 + heuristic
+            
+                if d < b[int(coordinates[0])][int(coordinates[1])][1]:
+                    
+                    b[int(coordinates[0])][int(coordinates[1])] = [curr, d]
+                    queueOfPos.append(path)
+                    
+                    #SORT QUEUE BASED ON DISTANCES
+                    j = 1
+                    pos = queueOfPos[len(queueOfPos) - 1 - j].split(" ")
+                    
+                    while b[int(coordinates[0])][int(coordinates[1])][1] < b[int(pos[0])][int(pos[1])][1]:
+                        
+                        temp = queueOfPos[len(queueOfPos) - j]
+                        queueOfPos[len(queueOfPos) - j] = queueOfPos[len(queueOfPos) - 1 - j]
+                        queueOfPos[len(queueOfPos) - 1 - j] = temp
+
+                        j += 1
+                        pos = queueOfPos[len(queueOfPos) - 1 - j].split(" ")
+                        
+        done.append(curr)
+        del queueOfPos[0]
+        curr = queueOfPos[0]
+
+    #WORKS BACKWARDS THROUGH PATHS TO FIND SHORTEST PATH
+    while curr != str(start[0]) + " " + str(start[1]):
+        last = curr
+        pos = curr.split(" ")
+        curr = b[int(pos[0])][int(pos[1])][0]
+        
+    pos = last.split(" ")
+    if int(pos[0]) > int(start[0]):
+        msg = "Right"
+    elif int(pos[0]) < int(start[0]):
+        msg = "Left"
+    elif int(pos[1]) < int(start[1]):
+        msg = "Up"
+    else:
+        msg = "Down"
+
+    return msg
+
+      
+
 def AIMove(): #DECENTLY SMART AI 
 
-    global P2Up,P2Down,P2Left,P2Right,P2Firing,LastWallHit
+    global P2Up,P2Down,P2Left,P2Right,P2Firing,LastWallHit,accuracy
 
     P2Up = False
     P2Down = False
@@ -1252,129 +1342,89 @@ def AIMove(): #DECENTLY SMART AI
         #SIMPLE PATHFINDER ALGORITHM
             
         board = []
+        accuracy = 50
         
         #CREATES A GRID OUT OF THE MAP
-        #FINDS A GOOD MOVE (FOR THE COMPUTER) FOR EACH TILE IN THE GRID
         
-        for column in range(0,24): 
+        for column in range(0,int(1200/accuracy)): 
             board.append([])
-            for row in range(0,14):
+            for row in range(0,int(700/accuracy)):
                 board[column].append(0)
 
+        #GRAPH OF BOARD
+        graph = {}
+        
         #DETERMINES BOTH PLAYERS' POSITIONS
         
-        OPPtankXSquare = int(tankX/50)
-        OPPtankYSquare = int((tankY - 200)/50)
-        AItankXSquare = int(P2tankX/50)
-        AItankYSquare = int((P2tankY - 200)/50)
+        OPPtankXSquare = int(tankX/accuracy)
+        OPPtankYSquare = int((tankY - 200)/accuracy)
+        AItankXSquare = int(P2tankX/accuracy)
+        AItankYSquare = int((P2tankY - 200)/accuracy)
         
-        for column in range(0,24): #ASSIGNS AN OPTIMAL MOVE FOR EACH TILE
-            for row in range(0,14):
-                if column == OPPtankXSquare:
-                    if row < OPPtankYSquare:
-                        board[column][row] = "Down"
-
-                    else:
-                        board[column][row] = "Up"
-
-                elif column < OPPtankXSquare:
-                    board[column][row] = "Right"
-
-                else:
-                    board[column][row] = "Left"
+        for column in range(0,int(1200/accuracy)): #ASSIGNS A LABEL FOR EACH TILE
+            for row in range(0,int(700/accuracy)):
+                board[column][row] = str(column) + " " + str(row)
+                graph[board[column][row]] = []
+                
+                if column > 0:
+                    graph[board[column][row]].append(str(column - 1) + " " + str(row))
+                if column < int(1200/accuracy - 1):
+                    graph[board[column][row]].append(str(column + 1) + " " + str(row))
+                if row > 0:
+                    graph[board[column][row]].append(str(column) + " " + str(row - 1))
+                if row < int(700/accuracy - 1):
+                    graph[board[column][row]].append(str(column) + " " + str(row + 1))
                     
-        for i in range(0,len(WallOrientations)): #RE-ASSIGNS MOVES FOR CERTAIN TILES THAT ARE BORDERING WALLS
+        for i in range(0,len(WallOrientations)): #RE-ASSIGNS LABELS FOR CERTAIN TILES THAT ARE BORDERING WALLS
             
             if WallOrientations[i] == "h": #IF WALL IS HORIZONTAL
                 
-                BotRowSquare = int((WallLevels[i] - 200)/50)    
+                BotRowSquare = int((WallLevels[i] - 200)/accuracy)    
                 TopRowSquare = BotRowSquare - 1
-                if BotRowSquare > 13:
-                    BotRowSquare = 13
+                if BotRowSquare > int(700/accuracy - 1):
+                    BotRowSquare = int(700/accuracy - 1)
                 if TopRowSquare < 0:
                     TopRowSquare = 0
-                MinSquare = int(WallMins[i]/50)
-                MaxSquare = int(WallMaxs[i]/50)
-                if MaxSquare > 23:
-                    MaxSquare = 23
-                if WallMins[i] % 50 == 0 and MinSquare > 0:
+                MinSquare = int(WallMins[i]/accuracy)
+                MaxSquare = int(WallMaxs[i]/accuracy)
+                if MaxSquare > int(1200/accuracy - 1):
+                    MaxSquare = int(1200/accuracy - 1)
+                if WallMins[i] % accuracy == 0 and MinSquare > 0:
                     MinSquare -= 1
-                iterations = MaxSquare - MinSquare + 1
-                if MinSquare == 0:
-                    optimalMove = "Right"
-                else:
-                    optimalMove = "Left"
-                    
-                for j in range(0,iterations):
-                    board[MinSquare + j][BotRowSquare] = optimalMove
-                    board[MinSquare + j][TopRowSquare] = optimalMove
-                    
-                    if MinSquare + j == MaxSquare: #FOR THE EDGES OF THE WALLS
-                        
-                        if AItankYSquare <= OPPtankYSquare: 
-                            if 3 <= P2tankX % 50 <= 7: #MUST HAVE ENOUGH ROOM TO TURN
-                                board[MinSquare][BotRowSquare] = "Down"
-                                board[MinSquare][TopRowSquare] = "Down"
-                            if 43 <= P2tankX % 50 <= 47:
-                                board[MaxSquare][BotRowSquare] = "Down"
-                                board[MaxSquare][TopRowSquare] = "Down"
-                        else:
-                            if 3 <= P2tankX % 50 <= 7:
-                                board[MinSquare][BotRowSquare] = "Up"
-                                board[MinSquare][TopRowSquare] = "Up"
-                            if 43 <= P2tankX % 50 <= 47:
-                                board[MaxSquare][BotRowSquare] = "Up"
-                                board[MaxSquare][TopRowSquare] = "Up"
+                iterations = MaxSquare - MinSquare
+
+                if TopRowSquare > 0 and BotRowSquare < int(700/accuracy - 1):
+                    for j in range(1,iterations):
+                        graph[board[MinSquare + j][BotRowSquare]].remove(str(MinSquare + j) + " " + str(TopRowSquare)) 
+                        graph[board[MinSquare + j][TopRowSquare]].remove(str(MinSquare + j) + " " + str(BotRowSquare))
                             
             else: #IF WALL IS VERTICAL
                 
-                TopColumnSquare = int(WallLevels[i]/50)   
+                TopColumnSquare = int(WallLevels[i]/accuracy)   
                 BotColumnSquare = TopColumnSquare - 1
-                if TopColumnSquare > 23:
-                    TopColumnSquare = 23
+                if TopColumnSquare > int(1200/accuracy - 1):
+                    TopColumnSquare = int(1200/accuracy - 1)
                 if BotColumnSquare < 0:
                     BotColumnSquare = 0
-                MinSquare = int((WallMins[i] - 200)/50)
-                MaxSquare = int((WallMaxs[i] - 200)/50)
-                if MaxSquare > 13:
-                    MaxSquare = 13
-                if WallMins[i] % 50 == 0 and MinSquare > 0:
+                MinSquare = int((WallMins[i] - 200)/accuracy)
+                MaxSquare = int((WallMaxs[i] - 200)/accuracy)
+                if MaxSquare > int(700/accuracy - 1):
+                    MaxSquare = int(700/accuracy - 1)
+                if WallMins[i] % accuracy == 0 and MinSquare > 0:
                     MinSquare -= 1
-                iterations = MaxSquare - MinSquare + 1
-                if MinSquare == 0:
-                    optimalMove = "Down"
-                    if MaxSquare == 13: #SPECIAL TEST CASE SCENARIO
-                        if tankY <= P2tankY:
-                            optimalMove = "Up"
-                        else:
-                            optimalMove = "Down"
-                else:
-                    optimalMove = "Up"
-                    
-                for j in range(0,iterations):
-                    board[TopColumnSquare][MinSquare + j] = optimalMove
-                    board[BotColumnSquare][MinSquare + j] = optimalMove
-                    
-                    if MinSquare + j == MaxSquare: #FOR THE EDGES OF THE WALLS
-                        
-                        if AItankXSquare <= OPPtankXSquare:
-                            if 3 <= P2tankY % 50 <= 7: #MUST HAVE ENOUGH ROOM TO TURN
-                                board[TopColumnSquare][MinSquare] = "Right"
-                                board[BotColumnSquare][MinSquare] = "Right"
-                            if 43 <= P2tankY % 50 <= 47:
-                                board[TopColumnSquare][MaxSquare] = "Right"
-                                board[BotColumnSquare][MaxSquare] = "Right"
-                        else:
-                            if 3 <= P2tankY % 50 <= 7:
-                                board[TopColumnSquare][MinSquare] = "Left"
-                                board[BotColumnSquare][MinSquare] = "Left"
-                            if 43 <= P2tankY % 50 <= 47:
-                                board[TopColumnSquare][MaxSquare] = "Left"
-                                board[BotColumnSquare][MaxSquare] = "Left"
+                iterations = MaxSquare - MinSquare
 
+                if BotColumnSquare > 0 and TopColumnSquare < int(1200/accuracy - 1):    
+                    for j in range(1,iterations):
+                        graph[board[TopColumnSquare][MinSquare + j]].remove(str(BotColumnSquare) + " " + str(MinSquare + j)) 
+                        graph[board[BotColumnSquare][MinSquare + j]].remove(str(TopColumnSquare) + " " + str(MinSquare + j))
+                                
         #CARRYING OUT DESIRED MOVE
-                        
-        DesiredMove = board[AItankXSquare][AItankYSquare]
+                    
+        start = [AItankXSquare,AItankYSquare]
+        finish = [OPPtankXSquare,OPPtankYSquare]
+        
+        DesiredMove = Astar(graph,start,finish)
 
         if DesiredMove == "Up": #ANGLES TANK BASED ON MOVE, THEN BEGINS TO MOVE FORWARD
             if abs(PA - radians(90)) < radians(2):
