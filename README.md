@@ -21,3 +21,5 @@ If “2 Player Mode” has been selected, the second player must press the “Up
 Click on the circle in the middle of either tank to change that player’s colour. 
 Press the “Escape” key to exit at any time during the battle. Once a player has been defeated, the winner is declared and the game ends. 
 
+Additionally, the AI opponent incorporates the A* search algorithm for pathfinding.
+
