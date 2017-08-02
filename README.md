@@ -1,5 +1,7 @@
 # Tanks
 
+![Screenshot](TanksPicture.jpg)
+
 Game Description:
 
 TANKS is a recreation of various classic tank games. The main objective of this game is to destroy the opponent’s tank. This can be accomplished by depleting the opponent’s hit points. 
